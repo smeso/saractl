@@ -1,0 +1,2 @@
+debian/initramfs/saractl usr/share/initramfs-tools/hooks/
+debian/initramfs/saractl-script usr/share/initramfs-tools/scripts/init-bottom/

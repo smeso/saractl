@@ -1,0 +1,8 @@
+#!/bin/sh -e
+# initramfs hook for saractl
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/bin/base64 /bin
+/usr/sbin/saractl config_to_file -F sh -o "${DESTDIR}/bin/sarainit"
+chmod +x "${DESTDIR}/bin/sarainit"

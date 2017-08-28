@@ -1,0 +1,15 @@
+#!/bin/sh -e
+
+PREREQS=""
+
+prereqs() { echo "$PREREQS"; }
+
+case "$1" in
+    prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+/bin/mount -t securityfs none /sys/kernel/security
+/bin/sarainit
