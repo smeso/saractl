@@ -246,7 +246,7 @@ class Config(BaseConfig):
     def __execstack_check(self, path):
         if ELFFile is not None:
             try:
-                with open('path', 'rb') as f:
+                with open(path, 'rb') as f:
                     elffile = ELFFile(f)
                     for segment in elffile.iter_segments():
                         if describe_p_type(segment['p_type']) == 'GNU_STACK':
