@@ -159,6 +159,7 @@ class Config(BaseConfig):
                 elif 'EMUTRAMP_OR_MPROTECT' in flags:
                     flags.remove('EMUTRAMP_OR_MPROTECT')
                     emudo = 'MPROTECT'
+                    flags.append('MPROTECT')
                 elif 'EMUTRAMP' in flags:
                     flags.remove('EMUTRAMP')
                     emudo = emudef
