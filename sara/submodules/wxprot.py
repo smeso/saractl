@@ -184,6 +184,10 @@ class Config(BaseConfig):
                     except ValueError:
                         pass
                     try:
+                        flags.remove('MMAP')
+                    except ValueError:
+                        pass
+                    try:
                         flags.remove('COMPLAIN')
                     except ValueError:
                         pass
@@ -228,7 +232,7 @@ class Config(BaseConfig):
                 elif f == 'TRANSFER':
                     d['flags'] |= SARA_WXP_TRANSFER
                 elif f == 'MMAP':
-                    d['flags'] |= SARA_WXP_MMAP
+                    d['flags'] |= SARA_WXP_MMAP | SARA_WXP_OTHER | SARA_WXP_WXORX
             if not Config.are_flags_valid(d['flags']):
                 raise WXPConfigException(location, 'invalid flags')
             if d['exact'] and \
