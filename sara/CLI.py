@@ -18,9 +18,15 @@
 
 import logging
 from argparse import ArgumentParser
+from os import geteuid
 from sara.Sara import Sara
 from sara.submodules import submodules_names
 
+try:
+    from prctl import cap_effective
+except ImportError:
+    cap_effective = lambda: None
+    cap_effective.mac_override = True
 
 class CLI(object):
     def __init__(self, argv):
@@ -56,6 +62,14 @@ class CLI(object):
                 exit(1)
 
     def do_cmd(self):
+        if geteuid() != 0 and self.cmd != 'config_to_file':
+            logging.error('you must be root.')
+            return 1
+        if not cap_effective.mac_override and \
+           self.cmd != 'status' and \
+           self.cmd != 'config_to_file':
+            logging.error('you need CAP_MAC_OVERRIDE to modify SARA\'s config.')
+            return 1
         if self.cmd == 'load':
             force = False
             if self.parsed_args.force:
