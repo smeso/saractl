@@ -9,7 +9,7 @@ Homepage: https://github.com/smeso/saractl
 Package: saractl
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}
-Recommends: python3-pyelftools
+Recommends: python3-pyelftools, python3-prctl
 Description: S.A.R.A.'s userspace utilities.
  S.A.R.A.'s userspace utilities.
  Work in Progress
