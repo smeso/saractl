@@ -44,7 +44,7 @@ class CLI(object):
             self.log_level = logging.INFO
         elif self.parsed_args.log_level >= 2:
             self.log_level = logging.DEBUG
-        logging.basicConfig(format='%(message)s', level=self.log_level)
+        logging.basicConfig(format='saractl: %(message)s', level=self.log_level)
         self.config_dir = self.parsed_args.config_dir
         self.securityfs = self.parsed_args.securityfs
         self.submodule = self.parsed_args.submodule
