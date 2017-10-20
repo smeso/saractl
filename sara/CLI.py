@@ -138,6 +138,26 @@ class CLI(object):
         if 'configs' in data:
             c = data['configs'][submodule]
         print('{}: {}'.format(ln, 'enabled' if en == '1' else 'disabled'))
+        if submodule == 'wxprot':
+            wxe = data['extras'][submodule]['xattr_enabled']
+            wxua = data['extras'][submodule]['xattr_user_allowed']
+            wea = data['extras'][submodule]['emutramp_available']
+            if wxe is None:
+                print('WX Protection XATTRS: not available')
+            elif wxe == '1':
+                print('WX Protection XATTRS: enabled')
+            else:
+                print('WX Protection XATTRS: disabled')
+            if wxua is None:
+                print('WX Protection user XATTRS: not available')
+            elif wxua == '1':
+                print('WX Protection user XATTRS: enabled')
+            else:
+                print('WX Protection user XATTRS: disabled')
+            if wea == '1':
+                print('Trampoline emulation: available')
+            else:
+                print('Trampoline emulation: not available')
         print('Default: {}'.format(data['default_values'][submodule]))
         print('Version: {}'.format(v))
         if h == '0'*40:

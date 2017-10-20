@@ -35,7 +35,7 @@ long_name = 'WX Protection'
 sysfs_name = config_name
 default_value = 'default_flags'
 main_options = [('wxprot_emutramp_missing_default', 'MPROTECT')]
-extra_files = ['emutramp_available']
+extra_files = ['emutramp_available', 'xattr_enabled', 'xattr_user_allowed']
 
 
 def startup():

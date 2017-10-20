@@ -91,6 +91,13 @@ class SubModLoader(object):
                 if k == 'sara_enabled':
                     if v == 0:
                         self.disable()
+                elif k in ('wxprot_xattr_enabled',
+                           'wxprot_xattr_user_allowed'):
+                    subm, name = k.split('_', 1)
+                    if v == 1:
+                        self.__write_flag(subm, name, 1)
+                    else:
+                        self.__write_flag(subm, name, 0)
                 elif k.endswith('_enabled'):
                     if v == 0:
                         self.disable(k[:-8])
@@ -109,7 +116,7 @@ class SubModLoader(object):
                 if k == 'sara_enabled':
                     if v == 1:
                         self.enable()
-                elif k.endswith('_enabled'):
+                elif k.endswith('_enabled') and k != 'wxprot_xattr_enabled':
                     if v == 1:
                         self.enable(k[:-8])
             if self.main_options['sara_locked'] == 1:
@@ -131,6 +138,8 @@ class SubModLoader(object):
         for d in self.__submodules:
             ret[d['sysfs_name']] = {'long_name': d['long_name']}
             for f in ('enabled', 'hash', 'version'):
+                ret[d['sysfs_name']][f] = self.__get_flag(d['sysfs_name'], f)
+            for f in d['extra_files']:
                 ret[d['sysfs_name']][f] = self.__get_flag(d['sysfs_name'], f)
         return ret
 
@@ -194,6 +203,8 @@ class SubModLoader(object):
                 return fd.read().strip()
         except IOError:
             return None
+        except FileNotFoundError:
+            return None
 
     def __write_flag(self, subname, flag_name, value):
         df = join(self.sysfs_path, subname, flag_name)
@@ -201,6 +212,8 @@ class SubModLoader(object):
             with open(df, 'w', encoding='ascii') as fd:
                 fd.write('{}\n'.format(value))
         except IOError:
+            pass
+        except PermissionError:
             pass
 
     def __load_config_objects(self, config=None, extras=None):
