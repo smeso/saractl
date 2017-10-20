@@ -21,10 +21,10 @@
 
 ### BEGIN INIT INFO
 # Provides:          sara
-# Required-Start:    $local_fs
-# Required-Stop:     umountfs
+# Required-Start:    $remote_fs
+# Required-Stop:     $remote_fs
 # Default-Start:     S
-# Default-Stop:      0 6
+# Default-Stop:
 # Short-Description: S.A.R.A. initialization
 # Description:       S.A.R.A. init script. This script loads the config.
 ### END INIT INFO

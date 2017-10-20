@@ -5,4 +5,4 @@ export PYBUILD_NAME=saractl
 	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_installinit:
-	dh_installinit --update-rcd-params='start 37 S . stop 99 0 6 .' --no-restart-on-upgrade --error-handler=true --name=sara
+	dh_installinit --update-rcd-params='start 37 S .' --no-restart-on-upgrade --error-handler=true --name=sara
