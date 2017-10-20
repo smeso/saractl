@@ -49,7 +49,7 @@ class Sara(object):
         return True
 
     def load(self, force=False):
-        return self.__sml.load_config(force=force, skip_main=True)
+        return self.__sml.load_config(force=force)
 
     def screenlock(self):
         return True
