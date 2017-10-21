@@ -95,160 +95,166 @@ class Config(BaseConfig):
                    self.obj['exact'] == other.obj['exact']
 
     def build_dicts_from_config_lines(self):
+        self.load_emudef()
+        seen = set()
+        for location, line in self.config_lines:
+            if line[0] in seen:
+                continue
+            seen.add(line[0])
+            self.dicts.append(self.parse_line(location, line))
+        self.dicts.sort(key=self.DictKey)
+
+    def load_emudef(self):
         emudef = self.main_options['wxprot_emutramp_missing_default']
         if emudef is None:
-            emudef = 'MPROTECT'
+            self.emudef = 'MPROTECT'
         else:
             emudef = emudef.strip().upper()
             if emudef == 'NONE':
-                emudef = 'NONE'
+                self.emudef = 'NONE'
             elif emudef == 'MPROTECT':
-                emudef = 'MPROTECT'
+                self.emudef = 'MPROTECT'
             else:
                 raise WXPConfigException('main', 'wrong value for "wxprot_emutramp_missing_default"')
         emuavail = self.extra_files['emutramp_available']
         if emuavail is None or emuavail.strip() == '0':
-            emuavail = False
+            self.emuavail = False
         else:
-            emuavail = True
-        seen = set()
-        for location, line in self.config_lines:
-            if len(line) < 2:
-                raise WXPConfigException(location, 'not enough fields')
-            path = line[0]
-            flags = ' '.join(line[1:])
-            if path in seen:
-                continue
-            seen.add(path)
-            flags = sub(r',+', ',', sub(r'\s+', '', flags)).upper().split(',')
-            allowed_flags = ('FULL',
-                             'VERBOSE',
-                             'WXORX',
-                             'STACK',
-                             'HEAP',
-                             'COMPLAIN',
-                             'OTHER',
-                             'MPROTECT',
-                             'EMUTRAMP',
-                             'EMUTRAMP_OR_MPROTECT',
-                             'EMUTRAMP_OR_NONE',
-                             'TRANSFER',
-                             'MMAP',
-                             'NONE')
-            if any([f not in allowed_flags for f in flags]):
-                raise WXPConfigException(location, 'invalid flag')
-            if not (('NONE' in flags and len(flags) == 1) or
-               ('NONE' in flags and len(flags) == 2 and 'TRANSFER' in flags) or
-                'NONE' not in flags):
-                raise WXPConfigException(location, 'invalid flags')
-            if (len(path) - (1 if path[-1] == '*' else 0)) > SARA_PATH_MAX:
-                raise WXPConfigException(location, 'path too long')
-            ef = 0
-            if 'EMUTRAMP' in flags:
-                ef += 1
-            if 'EMUTRAMP_OR_MPROTECT' in flags:
-                ef += 1
+            self.emuavail = True
+
+    def parse_line(self, location, line):
+        if len(line) < 2:
+            raise WXPConfigException(location, 'not enough fields')
+        path = line[0]
+        flags = ' '.join(line[1:])
+        flags = sub(r',+', ',', sub(r'\s+', '', flags)).upper().split(',')
+        allowed_flags = ('FULL',
+                         'VERBOSE',
+                         'WXORX',
+                         'STACK',
+                         'HEAP',
+                         'COMPLAIN',
+                         'OTHER',
+                         'MPROTECT',
+                         'EMUTRAMP',
+                         'EMUTRAMP_OR_MPROTECT',
+                         'EMUTRAMP_OR_NONE',
+                         'TRANSFER',
+                         'MMAP',
+                         'NONE')
+        if any([f not in allowed_flags for f in flags]):
+            raise WXPConfigException(location, 'invalid flag')
+        if not (('NONE' in flags and len(flags) == 1) or
+            ('NONE' in flags and len(flags) == 2 and 'TRANSFER' in flags) or
+            'NONE' not in flags):
+            raise WXPConfigException(location, 'invalid flags')
+        if (len(path) - (1 if path[-1] == '*' else 0)) > SARA_PATH_MAX:
+            raise WXPConfigException(location, 'path too long')
+        ef = 0
+        if 'EMUTRAMP' in flags:
+            ef += 1
+        if 'EMUTRAMP_OR_MPROTECT' in flags:
+            ef += 1
+        if 'EMUTRAMP_OR_NONE' in flags:
+            ef += 1
+        if ef > 1:
+            raise WXPConfigException(location, 'can\'t use more the one version of the EMUTRAMP flag')
+        if not self.emuavail and ef == 1:
             if 'EMUTRAMP_OR_NONE' in flags:
-                ef += 1
-            if ef > 1:
-                raise WXPConfigException(location, 'can\'t use more the one version of the EMUTRAMP flag')
-            if not emuavail and ef == 1:
-                if 'EMUTRAMP_OR_NONE' in flags:
-                    flags.remove('EMUTRAMP_OR_NONE')
-                    emudo = 'NONE'
-                elif 'EMUTRAMP_OR_MPROTECT' in flags:
-                    flags.remove('EMUTRAMP_OR_MPROTECT')
-                    emudo = 'MPROTECT'
-                    flags.append('MPROTECT')
-                elif 'EMUTRAMP' in flags:
-                    flags.remove('EMUTRAMP')
-                    emudo = emudef
-                if emudo == 'NONE':
-                    try:
-                        flags.remove('MPROTECT')
-                    except ValueError:
-                        pass
-                    try:
-                        flags.remove('HEAP')
-                    except ValueError:
-                        pass
-                    try:
-                        flags.remove('OTHER')
-                    except ValueError:
-                        pass
-                    try:
-                        flags.remove('STACK')
-                    except ValueError:
-                        pass
-                    try:
-                        flags.remove('WXORX')
-                    except ValueError:
-                        pass
-                    try:
-                        flags.remove('MMAP')
-                    except ValueError:
-                        pass
-                    try:
-                        flags.remove('COMPLAIN')
-                    except ValueError:
-                        pass
-                    try:
-                        flags.remove('VERBOSE')
-                    except ValueError:
-                        pass
-            elif emuavail and ef == 1:
-                if 'EMUTRAMP_OR_NONE' in flags:
-                    flags.remove('EMUTRAMP_OR_NONE')
-                    flags.append('EMUTRAMP')
-                elif 'EMUTRAMP_OR_MPROTECT' in flags:
-                    flags.remove('EMUTRAMP_OR_MPROTECT')
-                    flags.append('EMUTRAMP')
-            d = {}
-            if path[-1] == '*':
-                d['path'] = path[:-1]
-                d['exact'] = False
-            else:
-                d['path'] = path
-                d['exact'] = True
-            d['flags'] = 0
-            for f in flags:
-                if f == 'FULL':
-                    d['flags'] |= SARA_WXP_FULL
-                elif f == 'VERBOSE':
-                    d['flags'] |= SARA_WXP_VERBOSE
-                elif f == 'WXORX':
-                    d['flags'] |= SARA_WXP_WXORX
-                elif f == 'STACK':
-                    d['flags'] |= SARA_WXP_STACK | SARA_WXP_WXORX
-                elif f == 'HEAP':
-                    d['flags'] |= SARA_WXP_HEAP | SARA_WXP_WXORX
-                elif f == 'COMPLAIN':
-                    d['flags'] |= SARA_WXP_COMPLAIN
-                elif f == 'OTHER':
-                    d['flags'] |= SARA_WXP_OTHER | SARA_WXP_WXORX
-                elif f == 'EMUTRAMP':
-                    d['flags'] |= SARA_WXP_EMUTRAMP
-                elif f == 'MPROTECT':
-                    d['flags'] |= SARA_WXP_MPROTECT | SARA_WXP_WXORX
-                elif f == 'TRANSFER':
-                    d['flags'] |= SARA_WXP_TRANSFER
-                elif f == 'MMAP':
-                    d['flags'] |= SARA_WXP_MMAP | SARA_WXP_OTHER | SARA_WXP_WXORX
-            if not Config.are_flags_valid(d['flags']):
-                raise WXPConfigException(location, 'invalid flags')
-            if d['exact'] and \
-               d['flags'] & SARA_WXP_WXORX and \
-               isfile(d['path']) and \
-               self.__execstack_check(d['path']):
-                raise WXPConfigException(location,
-                                         "WXORX protection is incompaible with GNU executable stack marking.")
-            self.dicts.append(d)
-        self.dicts.sort(key=self.DictKey)
+                flags.remove('EMUTRAMP_OR_NONE')
+                emudo = 'NONE'
+            elif 'EMUTRAMP_OR_MPROTECT' in flags:
+                flags.remove('EMUTRAMP_OR_MPROTECT')
+                emudo = 'MPROTECT'
+                flags.append('MPROTECT')
+            elif 'EMUTRAMP' in flags:
+                flags.remove('EMUTRAMP')
+                emudo = self.emudef
+            if emudo == 'NONE':
+                try:
+                    flags.remove('MPROTECT')
+                except ValueError:
+                    pass
+                try:
+                    flags.remove('HEAP')
+                except ValueError:
+                    pass
+                try:
+                    flags.remove('OTHER')
+                except ValueError:
+                    pass
+                try:
+                    flags.remove('STACK')
+                except ValueError:
+                    pass
+                try:
+                    flags.remove('WXORX')
+                except ValueError:
+                    pass
+                try:
+                    flags.remove('MMAP')
+                except ValueError:
+                    pass
+                try:
+                    flags.remove('COMPLAIN')
+                except ValueError:
+                    pass
+                try:
+                    flags.remove('VERBOSE')
+                except ValueError:
+                    pass
+        elif self.emuavail and ef == 1:
+            if 'EMUTRAMP_OR_NONE' in flags:
+                flags.remove('EMUTRAMP_OR_NONE')
+                flags.append('EMUTRAMP')
+            elif 'EMUTRAMP_OR_MPROTECT' in flags:
+                flags.remove('EMUTRAMP_OR_MPROTECT')
+                flags.append('EMUTRAMP')
+        d = {}
+        if path[-1] == '*':
+            d['path'] = path[:-1]
+            d['exact'] = False
+        else:
+            d['path'] = path
+            d['exact'] = True
+        d['flags'] = 0
+        for f in flags:
+            if f == 'FULL':
+                d['flags'] |= SARA_WXP_FULL
+            elif f == 'VERBOSE':
+                d['flags'] |= SARA_WXP_VERBOSE
+            elif f == 'WXORX':
+                d['flags'] |= SARA_WXP_WXORX
+            elif f == 'STACK':
+                d['flags'] |= SARA_WXP_STACK | SARA_WXP_WXORX
+            elif f == 'HEAP':
+                d['flags'] |= SARA_WXP_HEAP | SARA_WXP_WXORX
+            elif f == 'COMPLAIN':
+                d['flags'] |= SARA_WXP_COMPLAIN
+            elif f == 'OTHER':
+                d['flags'] |= SARA_WXP_OTHER | SARA_WXP_WXORX
+            elif f == 'EMUTRAMP':
+                d['flags'] |= SARA_WXP_EMUTRAMP
+            elif f == 'MPROTECT':
+                d['flags'] |= SARA_WXP_MPROTECT | SARA_WXP_WXORX
+            elif f == 'TRANSFER':
+                d['flags'] |= SARA_WXP_TRANSFER
+            elif f == 'MMAP':
+                d['flags'] |= SARA_WXP_MMAP | SARA_WXP_OTHER | SARA_WXP_WXORX
+        if not Config.are_flags_valid(d['flags']):
+            raise WXPConfigException(location, 'invalid flags')
+        if d['exact'] and \
+            d['flags'] & SARA_WXP_WXORX and \
+            isfile(d['path']) and \
+            self.execstack_check(d['path']):
+            raise WXPConfigException(location,
+                            "WXORX protection is incompaible with GNU executable stack marking.")
+        return d
 
     def extra_dicts_stuff(self):
         pass
 
-    def __execstack_check(self, path):
+    def execstack_check(self, path):
         if ELFFile is not None:
             try:
                 with open(path, 'rb') as f:
