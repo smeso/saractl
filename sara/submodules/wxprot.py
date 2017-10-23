@@ -36,6 +36,7 @@ sysfs_name = config_name
 default_value = 'default_flags'
 main_options = [('wxprot_emutramp_missing_default', 'MPROTECT')]
 extra_files = ['emutramp_available', 'xattr_enabled', 'xattr_user_allowed']
+xattr_name = 'wxp'
 
 
 def startup():
@@ -94,6 +95,20 @@ class Config(BaseConfig):
             return self.obj['path'] == other.obj['path'] and \
                    self.obj['exact'] == other.obj['exact']
 
+    def __init__(self,
+                 config_lines=None,
+                 binary=None,
+                 xattr=False,
+                 main_options=None,
+                 extra_files=None):
+        super().__init__(config_lines=config_lines,
+                         binary=binary,
+                         xattr=xattr,
+                         main_options=main_options,
+                         extra_files=extra_files)
+        self.emudef = 'MPROTECT'
+        self.emuavail = False
+
     def build_dicts_from_config_lines(self):
         self.load_emudef()
         seen = set()
@@ -145,8 +160,8 @@ class Config(BaseConfig):
         if any([f not in allowed_flags for f in flags]):
             raise WXPConfigException(location, 'invalid flag')
         if not (('NONE' in flags and len(flags) == 1) or
-            ('NONE' in flags and len(flags) == 2 and 'TRANSFER' in flags) or
-            'NONE' not in flags):
+                ('NONE' in flags and len(flags) == 2 and 'TRANSFER' in flags) or
+                'NONE' not in flags):
             raise WXPConfigException(location, 'invalid flags')
         if (len(path) - (1 if path[-1] == '*' else 0)) > SARA_PATH_MAX:
             raise WXPConfigException(location, 'path too long')
@@ -244,9 +259,9 @@ class Config(BaseConfig):
         if not Config.are_flags_valid(d['flags']):
             raise WXPConfigException(location, 'invalid flags')
         if d['exact'] and \
-            d['flags'] & SARA_WXP_WXORX and \
-            isfile(d['path']) and \
-            self.execstack_check(d['path']):
+           d['flags'] & SARA_WXP_WXORX and \
+           isfile(d['path']) and \
+           self.execstack_check(d['path']):
             raise WXPConfigException(location,
                             "WXORX protection is incompaible with GNU executable stack marking.")
         return d
@@ -312,6 +327,11 @@ class Config(BaseConfig):
                                           wild='' if d['exact'] else '*')]
             line.append(Config.flags_to_text(d['flags']))
             self.config_lines.append(('', line))
+
+    def build_xattr_from_single_line(self, line):
+        self.load_emudef()
+        d = self.parse_line(line[0], line)
+        return d['flags']
 
     @staticmethod
     def default_value_to_text(f):

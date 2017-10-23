@@ -51,10 +51,12 @@ class BaseConfig(ABC):
     def __init__(self,
                  config_lines=None,
                  binary=None,
+                 xattr=False,
                  main_options=None,
                  extra_files=None):
-        assert config_lines is None or binary is None
-        assert config_lines is not None or binary is not None
+        if not xattr:
+            assert config_lines is None or binary is None
+            assert config_lines is not None or binary is not None
         if main_options is None:
             self.main_options = {}
         else:
@@ -64,18 +66,19 @@ class BaseConfig(ABC):
         else:
             self.extra_files = extra_files
         self.dicts = []
-        if config_lines is not None:
-            self._binary = b''
-            self.config_lines = config_lines
-            self.build_dicts_from_config_lines()
-            if self.extra_dicts_stuff():
-                logging.warning(self.WARN)
-            self.build_binary()
-        else:
-            self._binary = binary
-            self.config_lines = []
-            self.build_dicts_from_binary()
-            self.build_config_lines()
+        self._binary = b''
+        self.config_lines = []
+        if not xattr:
+            if config_lines is not None:
+                self.config_lines = config_lines
+                self.build_dicts_from_config_lines()
+                if self.extra_dicts_stuff():
+                    logging.warning(self.WARN)
+                self.build_binary()
+            else:
+                self._binary = binary
+                self.build_dicts_from_binary()
+                self.build_config_lines()
 
     def __hash(self):
         return sha1(self.config.encode('utf8'))
@@ -115,6 +118,10 @@ class BaseConfig(ABC):
 
     @abstractmethod
     def build_config_lines(self):
+        pass
+
+    @abstractmethod
+    def build_xattr_from_single_line(self, line):
         pass
 
     @staticmethod

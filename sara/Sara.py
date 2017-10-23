@@ -71,6 +71,15 @@ class Sara(object):
             ret['configs'] = self.__sml.get_current_configs()
         return ret
 
+    def xattr_encode(self, submodule, value, filename=None):
+        return self.__sml.xattr_encode(submodule, value, filename=filename)
+
+    def xattr_decode(self, xattr_name, value):
+        return self.__sml.xattr_decode(xattr_name, value)
+
+    def xattr_names(self):
+        return self.__sml.xattr_names()
+
     def make_bin_config_files(self, dest_dir, config=None):
         configs = self.__sml.get_config_binaries(config, {'emutramp_available': '1'})
         configs['wxprot_noemutramp'] = self.__sml.get_config_binaries(config, {'emutramp_available': '2'})['wxprot']

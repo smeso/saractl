@@ -26,14 +26,25 @@ try:
     from prctl import cap_effective
 except ImportError:
     cap_effective = lambda: None
-    cap_effective.mac_override = True
+    cap_effective.mac_override = not bool(geteuid())
+    cap_effective.sys_admin = not bool(geteuid())
+
+try:
+    from xattr import getxattr, listxattr, removexattr, setxattr
+    XATTR_AVAILABLE = True
+except ImportError:
+    XATTR_AVAILABLE = False
+
+VERSION = '0.1'
+
 
 class CLI(object):
+    prog = 'saractl'
+
     def __init__(self, argv):
-        self.prog = 'saractl'
         self.argv = argv
         self.argparse = self.build_argparse(prog=self.prog,
-                                            version='0.1',
+                                            version=VERSION,
                                             submodules=submodules_names)
         self.parsed_args = self.argparse.parse_args(argv[1:])
         if self.parsed_args.log_level is None:
@@ -44,14 +55,14 @@ class CLI(object):
             self.log_level = logging.INFO
         elif self.parsed_args.log_level >= 2:
             self.log_level = logging.DEBUG
-        logging.basicConfig(format='saractl: %(message)s', level=self.log_level)
+        logging.basicConfig(format='{}: %(message)s'.format(self.prog), level=self.log_level)
         self.config_dir = self.parsed_args.config_dir
         self.securityfs = self.parsed_args.securityfs
         self.submodule = self.parsed_args.submodule
         self.cmd = self.parsed_args.cmd_name
-        self.sara = self.__safe_call(Sara, self.config_dir, self.securityfs)
+        self.sara = self._safe_call(Sara, self.config_dir, self.securityfs)
 
-    def __safe_call(self, fname, *args, **kwargs):
+    def _safe_call(self, fname, *args, **kwargs):
         try:
             return fname(*args, **kwargs)
         except Exception as e:
@@ -74,24 +85,24 @@ class CLI(object):
             force = False
             if self.parsed_args.force:
                 force = True
-            ret = self.__safe_call(self.sara.load, force=force)
+            ret = self._safe_call(self.sara.load, force=force)
             if not ret:
                 logging.error('config load failed.')
                 return 1
         elif self.cmd == 'startup':
-            ret = self.__safe_call(self.sara.startup)
+            ret = self._safe_call(self.sara.startup)
             if not ret:
                 logging.error('startup failed.')
                 return 1
         elif self.cmd == 'enable':
-            self.__safe_call(self.sara.enable, self.submodule)
+            self._safe_call(self.sara.enable, self.submodule)
         elif self.cmd == 'disable':
-            self.__safe_call(self.sara.disable, self.submodule)
+            self._safe_call(self.sara.disable, self.submodule)
         elif self.cmd == 'status':
             verbose = False
             if self.parsed_args.log_level is not None and self.parsed_args.log_level >= 1:
                 verbose = True
-            ret = self.__safe_call(self.sara.status, verbose=verbose)
+            ret = self._safe_call(self.sara.status, verbose=verbose)
             if self.submodule == 'main':
                 if ret['extras']['main']['enabled'] == '1':
                     print('SARA: enabled')
@@ -104,11 +115,11 @@ class CLI(object):
             if self.submodule == 'main' or self.submodule == 'wxprot':
                 self.__status_helper(ret, 'wxprot')
         elif self.cmd == 'lock':
-            self.__safe_call(self.sara.lock)
+            self._safe_call(self.sara.lock)
         elif self.cmd == 'screenlock':
-            self.__safe_call(self.sara.screenlock)
+            self._safe_call(self.sara.screenlock)
         elif self.cmd == 'screenunlock':
-            self.__safe_call(self.sara.screenunlock)
+            self._safe_call(self.sara.screenunlock)
         elif self.cmd == 'config_to_file':
             dest = self.parsed_args.output
             if dest is not None:
@@ -116,17 +127,17 @@ class CLI(object):
             if self.parsed_args.output_format == 'binary':
                 if dest is None:
                     dest = './output/'
-                self.__safe_call(self.sara.make_bin_config_files, dest)
+                self._safe_call(self.sara.make_bin_config_files, dest)
             elif self.parsed_args.output_format == 'sh':
                 if dest is None:
                     dest = './output.sh'
-                self.__safe_call(self.sara.make_bin_config_sh, dest)
+                self._safe_call(self.sara.make_bin_config_sh, dest)
             elif self.parsed_args.output_format == 'c':
                 if dest is None:
                     dest = './output.c'
-                self.__safe_call(self.sara.make_bin_config_c, dest)
+                self._safe_call(self.sara.make_bin_config_c, dest)
         elif self.cmd == 'test':
-            return int(not self.__safe_call(self.sara.test))
+            return int(not self._safe_call(self.sara.test))
         return 0
 
     def __status_helper(self, data, submodule):
@@ -232,4 +243,138 @@ class CLI(object):
                          default=None,
                          help='Output file or directory. Defaults to "./output/" directory for "binary" format, "./output.sh" file for "sh" format and "./output.c" file for "c" format.')
         subparsers.add_parser('test', help='Run some self-tests.')
+        return parser
+
+
+class CLI_xattr(CLI):
+    prog = 'sara-xattr'
+    xattr_prefix = 'sara.'
+
+    def do_cmd(self):
+        if not XATTR_AVAILABLE:
+            logging.error('please install pyxattr to use this functionality.')
+            return 1
+        if self.cmd != 'get' and \
+           not self.parsed_args.user and \
+           not cap_effective.sys_admin:
+            logging.error('you need CAP_SYS_ADMIN to modify security xattrs.')
+            return 1
+        fname = self.parsed_args.filename[0]
+        xattr_names = self.sara.xattr_names()
+        sbm = ''
+        if self.submodule and self.submodule in xattr_names:
+            sbm = xattr_names[self.submodule]
+        if self.cmd == 'get':
+            xattr_name = self.xattr_prefix + sbm
+            for an in sorted(listxattr(fname)):
+                an = an.decode('ascii', errors='ignore')
+                if (not self.parsed_args.user and
+                    an.startswith('security.' + xattr_name)) or \
+                   ((self.parsed_args.user or self.parsed_args.both) and
+                    an.startswith('user.' + xattr_name)):
+                    value = getxattr(fname, an).decode('ascii', errors='ignore').lower()
+                    base = 10
+                    if value.startswith('0x'):
+                        base = 16
+                    elif value.startswith('0'):
+                        base = 8
+                    try:
+                        value = int(value, base)
+                    except ValueError:
+                        logging.error('malformed xattr "{}": {}.'.format(an, value))
+                        return 1
+                    ans = an.split('.', 2)[2]
+                    value = self._safe_call(self.sara.xattr_decode, ans, value)
+                    if value:
+                        for k, v in xattr_names.items():
+                            if v == ans:
+                                print('{} ({}): {}'.format(an, k, value))
+        elif self.cmd == 'set':
+            if sbm == '':
+                logging.error("you must specify --submodule.")
+                return 1
+            xattr_name = self.xattr_prefix + sbm
+            value = ' '.join(self.parsed_args.flags)
+            value = self._safe_call(self.sara.xattr_encode, self.submodule, value, fname)
+            if value:
+                if not self.parsed_args.user:
+                    setxattr(fname, 'security.' + xattr_name, str(value))
+                if self.parsed_args.user or self.parsed_args.both:
+                    setxattr(fname, 'user.' + xattr_name, str(value))
+        elif self.cmd == 'del':
+            if sbm == '':
+                logging.error("you must specify --submodule.")
+                return 1
+            xattr_name = self.xattr_prefix + sbm
+            if not self.parsed_args.user:
+                try:
+                    removexattr(fname, 'security.' + xattr_name)
+                except OSError:
+                    pass
+            if self.parsed_args.user or self.parsed_args.both:
+                try:
+                    removexattr(fname, 'user.' + xattr_name)
+                except OSError:
+                    pass
+        return 0
+
+    def build_argparse(self, prog, version, submodules):
+        parser = ArgumentParser(prog=prog,
+                                description=prog +
+                                ' is the userspace utility that manages S.A.R.A. LSM\'s extended attributes.')
+        sms = ', '.join(submodules)
+        log_level_g = parser.add_mutually_exclusive_group()
+        log_level_g.add_argument('-v', '--verbose',
+                                 dest='log_level',
+                                 action='count',
+                                 help='Be verbose. For extra verbosity use multiple -v.')
+        log_level_g.add_argument('-q', '--quiet',
+                                 dest='log_level',
+                                 action='store_const',
+                                 const=0,
+                                 help='Suppress any output.')
+        parser.add_argument('-V',
+                            '--version',
+                            action='version',
+                            version='{} {}'.format(prog, version))
+        parser.add_argument('-c',
+                            '--config-dir',
+                            default='/etc/sara',
+                            help='Specify config directory. Defaults to "/etc/sara"')
+        parser.add_argument('-S',
+                            '--securityfs',
+                            default='/sys/kernel/security',
+                            help='The mount point of the securityfs. Defaults to "/sys/kernel/security".')
+        parser.add_argument('-s',
+                            '--submodule',
+                            choices=submodules,
+                            default=None,
+                            help='Select the submodule you want to work with. Available submodules: {}.'.format(sms))
+        parser.add_argument('-u',
+                            '--user',
+                            action='store_const',
+                            const=True,
+                            default=False,
+                            help='Use user xattr namespace instead of the security namespace.')
+        parser.add_argument('-b',
+                            '--both',
+                            action='store_const',
+                            const=True,
+                            default=False,
+                            help='Use both user and security xattr namespace.')
+        subparsers = parser.add_subparsers(dest='cmd_name')
+        s = subparsers.add_parser('set',
+                                  help='Set specified xattr on a file.')
+        s.add_argument('filename', type=str, nargs=1,
+                       help='the target file')
+        s.add_argument('flags', type=str, nargs='+',
+                       help='the flags you want to set')
+        s = subparsers.add_parser('get',
+                                  help='get xattr from a file')
+        s.add_argument('filename', type=str, nargs=1,
+                       help='the target file')
+        s = subparsers.add_parser('del',
+                                  help='delete xattr from a file')
+        s.add_argument('filename', type=str, nargs=1,
+                       help='the target file')
         return parser

@@ -16,9 +16,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from sara.CLI import CLI
+from os.path import basename
+from sara.CLI import CLI, CLI_xattr
 
 
 def main(argv):
-    cli = CLI(argv)
+    prog = basename(argv[0])
+    if prog == 'sara-xattr':
+        cli = CLI_xattr(argv)
+    else:
+        cli = CLI(argv)
     return cli.do_cmd()

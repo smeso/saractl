@@ -21,7 +21,7 @@ from glob import iglob
 from hashlib import sha1
 from os.path import join, isdir
 from re import sub
-from shlex import split
+from shlex import quote, split
 
 from sara.submodules.BaseConfig import ConfigException
 from sara.submodules import submodules
@@ -50,6 +50,7 @@ class SubModLoader(object):
             for name, default_value in sm.main_options:
                 self.main_options[name] = default_value
             d['extra_files'] = sm.extra_files
+            d['xattr_name'] = sm.xattr_name
             d['startup'] = sm.startup
             d['config'] = sm.Config
             self.__submodules.append(d)
@@ -122,6 +123,39 @@ class SubModLoader(object):
             if self.main_options['sara_locked'] == 1:
                 self.lock()
         return True
+
+    def xattr_encode(self, submodule, value, filename=None):
+        self.__load_main_config()
+        for sm in self.__submodules:
+            if sm['config_name'] == submodule:
+                mopts = {k: v for k, v in self.main_options.items() if k in sm['main_options']}
+                exf = {}
+                for f in sm['extra_files']:
+                    exf[f] = self.__get_flag(sm['sysfs_name'], f)
+                try:
+                    obj = sm['config'](xattr=True,
+                                       main_options=mopts,
+                                       extra_files=exf)
+                except ConfigException as e:
+                    obj = None
+                    logging.warning(e)
+                if obj:
+                    if filename is None:
+                        filename = 'xattr '
+                    else:
+                        filename = quote(filename) + ' '
+                    value = split(filename + value)
+                    return obj.build_xattr_from_single_line(value)
+                break
+        return None
+
+    def xattr_decode(self, xattr_name, value):
+        for sm in self.__submodules:
+            if sm['xattr_name'] == xattr_name:
+                return sm['config'].default_value_to_text(value)
+
+    def xattr_names(self):
+        return {sm['config_name']: sm['xattr_name'] for sm in self.__submodules}
 
     def get_config_binaries(self, config=None, extras=None):
         ret = {}
