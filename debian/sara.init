@@ -37,7 +37,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="S.A.R.A. init script."
 NAME=sara
 SCRIPTNAME=/etc/init.d/$NAME
-SARA_CMD="/usr/sbin/saractl"
+SARA_CMD="/usr/bin/saractl"
 
 # Exit if the package is not installed
 [ -x "$SARA_CMD" ] || exit 0

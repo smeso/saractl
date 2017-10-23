@@ -17,13 +17,17 @@
 """
 
 from os.path import basename
+from sys import argv
 from sara.CLI import CLI, CLI_xattr
 
 
-def main(argv):
+def _main(argv):
     prog = basename(argv[0])
     if prog == 'sara-xattr':
         cli = CLI_xattr(argv)
     else:
         cli = CLI(argv)
     return cli.do_cmd()
+
+def main():
+    return _main(argv)

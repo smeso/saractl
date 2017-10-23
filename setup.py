@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from distutils.core import setup
+from setuptools import setup
 
 with open('README.rst') as f:
     long_description = f.read()
@@ -28,13 +28,16 @@ setup(name='saractl',
       author_email='s.mesoraca16@gmail.com',
       url='https://github.com/smeso/saractl',
       license='GPLv3+',
+      entry_points={ 'console_scripts': ['saractl = sara.main:main',
+                                         'sara-xattr = sara.main:main [xattr]']},
       long_description=long_description,
       platforms='Linux',
       keywords='linux lsm linux-security-module sara security w^x',
       packages=['sara', 'sara.submodules'],
-      requires=['pyelftools', 'pythonprctl', 'pyxattr'],
-      data_files=[('/usr/sbin/', ['scripts/saractl']),
-                  ('/etc/sara/', ['config/main.conf']),
+      extras_require={'elfcheck':  ["pyelftools"],
+                      'capabilities': ["pythonprctl"],
+                      'xattr': ["pyxattr"]},
+      data_files=[('/etc/sara/', ['config/main.conf']),
                   ('/etc/sara/wxprot.conf.d/', ['config/99_wxprot.conf'])],
       classifiers=['Development Status :: 3 - Alpha',
                    'Environment :: Console',

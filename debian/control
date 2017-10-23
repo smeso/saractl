@@ -2,14 +2,14 @@ Source: saractl
 Maintainer: Salvatore Mesoraca <s.mesoraca16@gmail.com>
 Section: python
 Priority: optional
-Build-Depends: dh-python, python3-all, debhelper (>= 9)
+Build-Depends: dh-python, python3-all, python3-setuptools, debhelper (>= 9)
 Standards-Version: 3.9.5
 Homepage: https://github.com/smeso/saractl
 
 Package: saractl
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}
-Recommends: python3-pyelftools, python3-prctl, python3-pyxattr
+Recommends: python3-pyelftools, python3-prctl, python3-pyxattr, python3-setuptools
 Description: S.A.R.A.'s userspace utilities.
  S.A.R.A.'s userspace utilities.
  Work in Progress
