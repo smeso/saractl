@@ -26,7 +26,7 @@ try:
     from prctl import cap_effective
 except ImportError:
     cap_effective = lambda: None
-    cap_effective.mac_override = not bool(geteuid())
+    cap_effective.mac_admin = not bool(geteuid())
     cap_effective.sys_admin = not bool(geteuid())
 
 try:
@@ -73,13 +73,9 @@ class CLI(object):
                 exit(1)
 
     def do_cmd(self):
-        if geteuid() != 0 and self.cmd != 'config_to_file':
-            logging.error('you must be root.')
-            return 1
-        if not cap_effective.mac_override and \
-           self.cmd != 'status' and \
+        if not cap_effective.mac_admin and \
            self.cmd != 'config_to_file':
-            logging.error('you need CAP_MAC_OVERRIDE to modify SARA\'s config.')
+            logging.error('you need CAP_MAC_ADMIN to access SARA\'s config.')
             return 1
         if self.cmd == 'load':
             force = False
