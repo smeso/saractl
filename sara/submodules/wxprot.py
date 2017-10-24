@@ -142,7 +142,7 @@ class Config(BaseConfig):
             raise WXPConfigException(location, 'not enough fields')
         path = line[0]
         flags = ' '.join(line[1:])
-        flags = sub(r',+', ',', sub(r'\s+', '', flags)).upper().split(',')
+        flags = list(set(sub(r',+', ',', sub(r'\s+', '', flags)).upper().split(',')))
         allowed_flags = ('FULL',
                          'VERBOSE',
                          'WXORX',
