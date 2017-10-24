@@ -218,6 +218,10 @@ class Config(BaseConfig):
                     flags.remove('VERBOSE')
                 except ValueError:
                     pass
+                try:
+                    flags.remove('FULL')
+                except ValueError:
+                    pass
         elif self.emuavail and ef == 1:
             if 'EMUTRAMP_OR_NONE' in flags:
                 flags.remove('EMUTRAMP_OR_NONE')
