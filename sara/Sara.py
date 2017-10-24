@@ -26,7 +26,8 @@ from sara.templates import SH_TEMPLATE, C_TEMPLATE, c_array
 
 class Sara(object):
     def __init__(self, config_path, sysfs_path):
-        self.__sml = SubModLoader(config_path, sysfs_path)
+        self.sysfs_path = sysfs_path
+        self.__sml = SubModLoader(config_path, self.sysfs_path)
 
     def enable(self, subm='main'):
         self.__sml.enable(subm=subm)
@@ -93,8 +94,10 @@ class Sara(object):
         configs['wxprot_noemutramp'] = self.__sml.get_config_binaries(config, {'emutramp_available': '2'})['wxprot']
         for k in configs:
             configs[k] = encodebytes(configs[k]).decode('ascii')
-        for k in ('sara_locked', 'sara_enabled', 'wxprot_enabled'):
+        for k in ('sara_locked', 'sara_enabled', 'wxprot_enabled',
+                  'wxprot_xattr_enabled', 'wxprot_xattr_user_allowed'):
             configs[k] = self.__sml.main_options[k]
+        configs['sysfs_path'] = self.sysfs_path
         shscript = SH_TEMPLATE.format(**configs)
         with open(dest, 'w') as fd:
             fd.write(shscript)
@@ -104,8 +107,10 @@ class Sara(object):
         configs['wxprot_noemutramp'] = self.__sml.get_config_binaries(config, {'emutramp_available': '2'})['wxprot']
         for k in configs:
             configs[k] = c_array(configs[k])
-        for k in ('sara_locked', 'sara_enabled', 'wxprot_enabled'):
+        for k in ('sara_locked', 'sara_enabled', 'wxprot_enabled',
+                  'wxprot_xattr_enabled', 'wxprot_xattr_user_allowed'):
             configs[k] = self.__sml.main_options[k]
+        configs['sysfs_path'] = self.sysfs_path
         csource = C_TEMPLATE.format(**configs)
         with open(dest, 'w') as fd:
             fd.write(csource)

@@ -29,7 +29,7 @@ def c_array(data):
 
 
 SH_TEMPLATE = """#!/bin/sh
-SECFS="/sys/kernel/security"
+SECFS="{sysfs_path}"
 
 WXPROT="{wxprot}"
 WXPROTN="{wxprot_noemutramp}"
@@ -41,6 +41,8 @@ else
     echo "${{WXPROTN}}" | base64 -d > "${{SECFS}}/sara/wxprot/.load"
 fi
 
+echo "{wxprot_xattr_enabled}" > "${{SECFS}}/sara/wxprot/xattr_enabled"
+echo "{wxprot_xattr_user_allowed}" > "${{SECFS}}/sara/wxprot/xattr_user_allowed"
 echo "{wxprot_enabled}" > "${{SECFS}}/sara/wxprot/enabled"
 echo "{sara_enabled}" > "${{SECFS}}/sara/main/enabled"
 #echo "{sara_locked}" > "${{SECFS}}/sara/main/locked"
@@ -50,7 +52,7 @@ exit 0
 
 C_TEMPLATE = """#include <stdio.h>
 
-#define SECFS "/sys/kernel/security"
+#define SECFS "{sysfs_path}"
 
 unsigned char WXPROT[] =\t{{{wxprot}}};
 unsigned char WXPROTN[] =\t{{{wxprot_noemutramp}}};
@@ -72,6 +74,16 @@ int main()
                 fwrite(WXPROTN, sizeof(WXPROTN), 1, f);
             fclose(f);
         }}
+    }}
+    f = fopen(SECFS "/sara/wxprot/xattr_enabled", "w");
+    if (f != NULL) {{
+        fwrite("{wxprot_xattr_enabled}", 1, 1, f);
+        fclose(f);
+    }}
+    f = fopen(SECFS "/sara/wxprot/xattr_user_allowed", "w");
+    if (f != NULL) {{
+        fwrite("{wxprot_xattr_user_allowed}", 1, 1, f);
+        fclose(f);
     }}
     f = fopen(SECFS "/sara/wxprot/enabled", "w");
     if (f != NULL) {{
