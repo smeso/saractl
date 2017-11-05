@@ -262,12 +262,13 @@ class Config(BaseConfig):
                 d['flags'] |= SARA_WXP_MMAP | SARA_WXP_OTHER | SARA_WXP_WXORX
         if not Config.are_flags_valid(d['flags']):
             raise WXPConfigException(location, 'invalid flags')
-        if d['exact'] and \
-           d['flags'] & SARA_WXP_WXORX and \
-           isfile(d['path']) and \
-           self.execstack_check(d['path']):
-            raise WXPConfigException(location,
+        if d['exact'] and isfile(d['path']):
+            if d['flags'] & SARA_WXP_WXORX and self.execstack_check(d['path']):
+                raise WXPConfigException(location,
                             "WXORX protection is incompaible with GNU executable stack marking.")
+            if d['flags'] & SARA_WXP_MMAP and self.relro_check(d['path']):
+                raise WXPConfigException(location,
+                            "MMAP restriction is incompaible with binaries missing a RELRO section.")
         return d
 
     def extra_dicts_stuff(self):
@@ -281,6 +282,18 @@ class Config(BaseConfig):
                     for segment in elffile.iter_segments():
                         if describe_p_type(segment['p_type']) == 'GNU_STACK':
                             return describe_p_flags(segment['p_flags']) == 'RWE'
+            except IOError:
+                pass
+        return False
+
+    def relro_check(self, path):
+        if ELFFile is not None:
+            try:
+                with open(path, 'rb') as f:
+                    elffile = ELFFile(f)
+                    for segment in elffile.iter_segments():
+                        if describe_p_type(segment['p_type']) == 'GNU_RELRO':
+                            return True
             except IOError:
                 pass
         return False
