@@ -3,7 +3,7 @@ saractl
 =======
 
 `saractl` is the userspace counterpart of the S.A.R.A. LSM.
-Work in progress...
+You can find more information about S.A.R.A. at <https://smeso.it/sara>.
 
 Licensing
 =========
