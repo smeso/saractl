@@ -1,0 +1,18 @@
+[Unit]
+Description=Userspace counterpart of the S.A.R.A. LSM
+After=local-fs.target
+Before=sysinit.target
+ConditionPathExists=/sys/kernel/security/sara
+DefaultDependencies=no
+Documentation=man:sara(7)
+Documentation=https://smeso.it/sara
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/saractl startup
+ExecStop=/usr/bin/saractl stop
+ExecReload=/usr/bin/saractl load
+
+[Install]
+WantedBy=sysinit.target
