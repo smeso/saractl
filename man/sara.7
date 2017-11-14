@@ -1,0 +1,512 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "SARA" "7" "November 20, 2017" "0.1" "S.A.R.A."
+.SH NAME
+sara \- S.A.R.A. LSM.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH INTRODUCTION
+.sp
+S.A.R.A. (S.A.R.A. is Another Recursive Acronym) is a stacked Linux Security
+Module that aims to collect heterogeneous security measures, providing a common
+interface to manage them.
+As of today it consists of one submodule:
+.INDENT 0.0
+.IP \(bu 2
+WX Protection
+.UNINDENT
+.sp
+The kernel\-space part is complemented by its user\-space counterpart: \fIsaractl\fP
+[1]\&.
+A test suite for WX Protection, called \fIsara\-test\fP [3], is also available.
+You can also visit the \fIofficial home page of S.A.R.A.\fP [4]\&.
+.sp
+At the time of writing S.A.R.A. has been proposed for upstreaming, but it\(aqs
+still out of tree.
+
+.sp
+.ce
+----
+
+.ce 0
+.sp
+.SS S.A.R.A.\(aqs Submodules
+.SS WX Protection
+.sp
+WX Protection aims to improve user\-space programs security by applying:
+.INDENT 0.0
+.IP \(bu 2
+\fI\%W^X enforcement\fP
+.IP \(bu 2
+\fI\%W!\->X (once writable never executable) mprotect restriction\fP
+.IP \(bu 2
+\fI\%Executable MMAP prevention\fP
+.UNINDENT
+.sp
+All of the above features can be enabled or disabled both system wide
+or on a per executable basis through the use of configuration files managed by
+\fIsaractl\fP [1]\&.
+.sp
+It is important to note that some programs may have issues working with
+WX Protection. In particular:
+.INDENT 0.0
+.IP \(bu 2
+\fBW^X enforcement\fP will cause problems to any programs that needs
+memory pages mapped both as writable and executable at the same time e.g.
+programs with executable stack markings in the \fIPT_GNU_STACK\fP segment.
+.IP \(bu 2
+\fBW!\->X mprotect restriction\fP will cause problems to any program that
+needs to generate executable code at run time or to modify executable
+pages e.g. programs with a \fIJIT\fP compiler built\-in or linked against a
+\fInon\-PIC\fP library.
+.IP \(bu 2
+\fBExecutable MMAP prevention\fP can work only with programs that have at least
+partial \fIRELRO\fP support. It\(aqs disabled automatically for programs that
+lack this feature. It will cause problems to any program that uses \fIdlopen\fP
+or tries to do an executable mmap. Unfortunately this feature is the one
+that could create most problems and should be enabled only after careful
+evaluation.
+.UNINDENT
+.sp
+To extend the scope of the above features, despite the issues that they may
+cause, they are complemented by \fI\%/proc/PID/attr/sara/wxprot interface\fP
+and \fI\%Trampoline emulation\fP\&.
+It\(aqs also possible to override the centralized configuration via \fI\%Extended
+filesystem attributes\fP\&.
+.sp
+At the moment, WX Protection (unless specified otherwise) should work on
+any architecture supporting the NX bit, including, but not limited to:
+\fIx86_64\fP, \fIx86_32\fP (with PAE), \fIARM\fP and \fIARM64\fP\&.
+.sp
+Parts of WX Protection are inspired by some of the features available in PaX.
+.SS W^X enforcement
+.sp
+W^X means that a program can\(aqt have a page of memory that is marked, at the
+same time, writable and executable. This also allow to detect many bad
+behaviours that make life much more easy for attackers. Programs running with
+this feature enabled will be more difficult to exploit in the case they are
+affected by some vulnerabilities, because the attacker will be forced
+to make more steps in order to exploit them.
+.SS W!\->X (once writable never executable) mprotect restriction
+.sp
+"Once writable never executable" means that any page that could have been
+marked as writable in the past won\(aqt ever be allowed to be marked (e.g. via
+an mprotect syscall) as executable.
+This goes on the same track as W^X, but is much stricter and prevents
+the runtime creation of new executable code in memory.
+Obviously, this feature does not prevent a program from creating a new file and
+\fImmapping\fP it as executable, however, it will be way more difficult for
+attackers to exploit vulnerabilities if this feature is enabled.
+.SS Executable MMAP prevention
+.sp
+This feature prevents the creation of new executable mmaps after the dynamic
+libraries have been loaded. When used in combination with \fBW!\->X mprotect
+restriction\fP this feature will completely prevent the creation of new
+executable code from the current thread.
+Obviously, this feature does not prevent cases in which an attacker uses an
+\fIexecve\fP to start a completely new program. This kind of restriction, if
+needed, can be applied using one of the other LSM that focuses on MAC.
+Please be aware that this feature can break many programs and so it should be
+enabled after careful evaluation.
+.SS /proc/PID/attr/sara/wxprot interface
+.sp
+The \fIprocattr\fP interface can be used by a thread to discover which
+WX Protection features are enabled and/or to tighten them: protection
+can\(aqt be softened via procattr.
+The interface is simple: it\(aqs a text file with an hexadecimal
+number in it representing enabled features (more information can be
+found in the \fI\%Flags values\fP section). Via this interface it is also
+possible to perform a complete memory scan to remove the write permission
+from pages that are both writable and executable.
+.sp
+Protections that prevent the runtime creation of executable code
+can be troublesome for all those programs that actually need to do it
+e.g. programs shipping with a JIT compiler built\-in.
+This feature can be use to run the JIT compiler with few restrictions
+while enforcing full WX Protection in the rest of the program.
+.sp
+The preferred way to access this interface is via \fIlibsara\fP [2]\&.
+If you don\(aqt want it as a dependency, you can just statically link it
+in your project or copy/paste parts of it.
+To make things simpler \fIlibsara\fP is the only part of S.A.R.A. released under
+\fICC0 \- No Rights Reserved\fP license.
+.SS Extended filesystem attributes
+.sp
+When this functionality is enabled, it\(aqs possible to override
+WX Protection flags set in the main configuration via extended attributes,
+even when S.A.R.A.\(aqs configuration is in "locked" mode.
+If the user namespace is also enabled, its attributes will override settings
+configured via the security namespace.
+The xattrs currently in use are:
+.INDENT 0.0
+.IP \(bu 2
+security.sara.wxprot
+.IP \(bu 2
+user.sara.wxprot
+.UNINDENT
+.sp
+They can be manually set to the desired value as a decimal, hexadecimal or
+octal number. When this functionality is enabled, S.A.R.A. can be easily used
+without the help of its userspace tools. Though the preferred way to change
+these attributes is \fIsara\-xattr\fP which is part of \fIsaractl\fP [1]\&.
+.SS Trampoline emulation
+.sp
+Some programs need to generate part of their code at runtime. Luckily enough,
+in some cases they only generate well\-known code sequences (the
+\fItrampolines\fP) that can be easily recognized and emulated by the kernel.
+This way WX Protection can still be active, so a potential attacker won\(aqt be
+able to generate arbitrary sequences of code, but just those that are
+explicitly allowed. This is not ideal, but it\(aqs still better than having WX
+Protection completely disabled.
+.sp
+In particular S.A.R.A. is able to recognize trampolines used by GCC for nested
+C functions and libffi\(aqs trampolines.
+This feature is available only on \fIx86_32\fP and \fIx86_64\fP\&.
+.SS Flags values
+.sp
+Flags are represented as a 16 bit unsigned integer in which every bit indicates
+the status of a given feature:
+.TS
+center;
+|l|l|.
+_
+T{
+Feature
+T}	T{
+Value
+T}
+_
+T{
+W!\->X Heap
+T}	T{
+0x0001
+T}
+_
+T{
+W!\->X Stack
+T}	T{
+0x0002
+T}
+_
+T{
+W!\->X Other memory
+T}	T{
+0x0004
+T}
+_
+T{
+W^X
+T}	T{
+0x0008
+T}
+_
+T{
+Don\(aqt enforce, just complain
+T}	T{
+0x0010
+T}
+_
+T{
+Be Verbose
+T}	T{
+0x0020
+T}
+_
+T{
+Executable MMAP prevention
+T}	T{
+0x0040
+T}
+_
+T{
+Force W^X on setprocattr
+T}	T{
+0x0080
+T}
+_
+T{
+Trampoline emulation
+T}	T{
+0x0100
+T}
+_
+T{
+Children will inherit flags
+T}	T{
+0x0200
+T}
+_
+.TE
+.IP [1] 5
+\fI\%saractl <https://github.com/smeso/saractl>\fP
+.IP [2] 5
+\fI\%libsara <https://github.com/smeso/libsara>\fP
+.IP [3] 5
+\fI\%sara\-test <https://github.com/smeso/sara-test>\fP
+.IP [4] 5
+\fI\%Homepage <https://smeso.it/sara>\fP
+.SS Bugs
+.sp
+Please report any issue to the relevant issue tracker:
+.INDENT 0.0
+.IP \(bu 2
+\fI\%saractl <https://github.com/smeso/saractl/issues>\fP
+.IP \(bu 2
+\fI\%libsara <https://github.com/smeso/libsara/issues>\fP
+.IP \(bu 2
+\fI\%sara\-test <https://github.com/smeso/sara-test/issues>\fP
+.IP \(bu 2
+\fI\%kernel <https://github.com/smeso/sara/issues>\fP
+.UNINDENT
+.SH KERNEL CONFIGURATION
+.sp
+\fBCONFIG_SECURITY_SARA\fP \- Enable S.A.R.A.
+.INDENT 0.0
+.INDENT 3.5
+This selects S.A.R.A. LSM, which aims to collect heterogeneous
+security measures providing a common interface to manage them.
+This LSM will always be stacked with the selected primary LSM and
+other stacked LSMs.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_DEFAULT_DISABLED\fP \-
+S.A.R.A. will be disabled at boot
+.INDENT 0.0
+.INDENT 3.5
+If you say Y here, S.A.R.A. will not be enabled at startup.
+You can override this option at boot time via "sara.enabled=[1|0]"
+kernel parameter or via user\-space utilities.
+This option is useful for distro kernels.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_NO_RUNTIME_ENABLE\fP \-
+S.A.R.A. can be turn on only at boot time
+.INDENT 0.0
+.INDENT 3.5
+By enabling this option it won\(aqt be possible to turn on S.A.R.A.
+at runtime via user\-space utilities. However it can still be
+turned on at boot time via the "sara.enabled=1" kernel parameter.
+This option is functionally equivalent to "sara.enabled=0" kernel
+parameter. This option is useful for distro kernels.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT\fP \-
+WX Protection: W^X and W!\->X protections
+.INDENT 0.0
+.INDENT 3.5
+WX Protection aims to improve user\-space programs security by applying:
+.INDENT 0.0
+.IP \(bu 2
+W^X memory restriction
+.IP \(bu 2
+W!\->X (once writable never executable) mprotect restriction
+.IP \(bu 2
+Executable MMAP prevention
+.UNINDENT
+.sp
+See \fI\%WX Protection\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fBDefault action for W^X and W!\->X protections\fP
+.INDENT 0.0
+.INDENT 3.5
+Choose the default behaviour of WX Protection when no config
+rule matches or no rule is loaded.
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT_DEFAULT_FLAGS_ALL_COMPLAIN_VERBOSE\fP \-
+Protections enabled but not enforced
+.INDENT 0.0
+.INDENT 3.5
+All features enabled except "Executable MMAP prevention",
+verbose reporting, but no actual enforce: it just complains.
+Its numeric value is 0x3f. See \fI\%Flags values\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT_DEFAULT_FLAGS_ALL_ENFORCE_VERBOSE\fP \-
+Full protection, verbose
+.INDENT 0.0
+.INDENT 3.5
+All features enabled except "Executable MMAP prevention".
+The enabled features will be enforced with verbose reporting.
+Its numeric value is 0x2f. See \fI\%Flags values\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT_DEFAULT_FLAGS_ALL_ENFORCE\fP \-
+Full protection, quiet
+.INDENT 0.0
+.INDENT 3.5
+All features enabled except "Executable MMAP prevention".
+The enabled features will be enforced quietly.
+Its numeric value is 0xf. See \fI\%Flags values\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT_DEFAULT_FLAGS_NONE\fP \-
+No protection at all
+.INDENT 0.0
+.INDENT 3.5
+All features disabled.
+Its numeric value is 0. See \fI\%Flags values\fP\&.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT_EMUTRAMP\fP \-
+Enable emulation for some types of trampolines
+.INDENT 0.0
+.INDENT 3.5
+Some programs and libraries need to execute special small code
+snippets from non\-executable memory pages.
+Most notable examples are the GCC and libffi trampolines.
+This features make it possible to execute those trampolines even
+if they reside in non\-executable memory pages.
+This features need to be enabled on a per\-executable basis
+via user\-space utilities.  See \fI\%Trampoline emulation\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT_XATTRS_ENABLED\fP \-
+xattrs support enabled by default
+.INDENT 0.0
+.INDENT 3.5
+If you say Y here it will be possible to override WX protection
+configuration via extended attributes in the security namespace.
+Even when S.A.R.A.\(aqs configuration has been locked. See
+\fI\%Extended filesystem attributes\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_CONFIG_SECURITY_SARA_WXPROT_XATTRS_USER\fP \-
+\(aquser\(aq namespace xattrs support enabled by default
+.INDENT 0.0
+.INDENT 3.5
+If you say Y here it will be possible to override WX protection
+configuration via extended attributes in the user namespace.
+Even when S.A.R.A.\(aqs configuration has been locked. See
+\fI\%Extended filesystem attributes\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fBCONFIG_SECURITY_SARA_WXPROT_DISABLED\fP \-
+WX protection will be disabled at boot
+.INDENT 0.0
+.INDENT 3.5
+If you say Y here WX protection won\(aqt be enabled at startup. You can
+override this option via user\-space utilities or at boot time via
+"sara.wxprot_enabled=[0|1]" kernel parameter.
+.UNINDENT
+.UNINDENT
+.SH KERNEL PARAMETERS
+.sp
+\fBsara.enabled=\fP Disable or enable S.A.R.A. at boot time.
+.INDENT 0.0
+.INDENT 3.5
+If disabled this way, S.A.R.A. can\(aqt be enabled
+again.
+.sp
+Format: { "0" | "1" }
+.sp
+See \fI\%Kernel Configuration\fP
+.sp
+0 \-\- disable.
+.sp
+1 \-\- enable.
+.sp
+Default value is set via kernel config option.
+.UNINDENT
+.UNINDENT
+.sp
+\fBsara.wxprot_enabled=\fP Disable or enable S.A.R.A. WX Protection
+at boot time.
+.INDENT 0.0
+.INDENT 3.5
+Format: { "0" | "1" }
+.sp
+See \fI\%Kernel Configuration\fP
+.sp
+0 \-\- disable.
+.sp
+1 \-\- enable.
+.sp
+Default value is set via kernel config option.
+.UNINDENT
+.UNINDENT
+.sp
+\fBsara.wxprot_default_flags=\fP Set S.A.R.A. WX Protection default flags.
+.INDENT 0.0
+.INDENT 3.5
+Format: <integer>
+.sp
+See \fI\%Flags values\fP
+.sp
+Default value is set via kernel config option.
+.UNINDENT
+.UNINDENT
+.sp
+\fBsara.wxprot_xattrs_enabled=\fP Enable support for security xattrs.
+.INDENT 0.0
+.INDENT 3.5
+Format: { "0" | "1" }
+.sp
+See \fI\%Kernel Configuration\fP
+.sp
+0 \-\- disable.
+.sp
+1 \-\- enable.
+.sp
+Default value is set via kernel config option.
+.UNINDENT
+.UNINDENT
+.sp
+\fBsara.wxprot_xattrs_user=\fP Enable support for user xattrs.
+.INDENT 0.0
+.INDENT 3.5
+Format: { "0" | "1" }
+.sp
+See \fI\%Kernel Configuration\fP
+.sp
+0 \-\- disable.
+.sp
+1 \-\- enable.
+.sp
+Default value is set via kernel config option.
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Salvatore Mesoraca
+.SH COPYRIGHT
+2017, Salvatore Mesoraca (https://smeso.it)
+.\" Generated by docutils manpage writer.
+.
