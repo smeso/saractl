@@ -275,7 +275,8 @@ class SubModLoader(object):
             except ConfigException as e:
                 obj = None
                 logging.warning(e)
-            self.__config_objects[d['sysfs_name']] = obj
+            else:
+                self.__config_objects[d['sysfs_name']] = obj
 
     def __load_config_objects_binary(self, binaries=None):
         for d in self.__submodules:
@@ -307,6 +308,8 @@ class SubModLoader(object):
             with open(cf, 'r', encoding='ascii') as fd:
                 for ln, line in enumerate(fd, 1):
                     line = sub(r'\s+', '', line.split('#')[0]).split('=', 1)
+                    if len(line) == 1 and line[0] == '':
+                        continue
                     if len(line) != 2 or not line[0] or not line[1]:
                         logging.warning('Syntax error at {}:{}'.format(cf, ln))
                         continue

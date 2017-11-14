@@ -293,9 +293,10 @@ class Config(BaseConfig):
                     elffile = ELFFile(f)
                     for segment in elffile.iter_segments():
                         if describe_p_type(segment['p_type']) == 'GNU_RELRO':
-                            return True
+                            return False
             except IOError:
                 pass
+            return True
         return False
 
     def build_binary(self):
