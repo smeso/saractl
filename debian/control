@@ -4,13 +4,15 @@ Section: python
 Priority: optional
 Build-Depends: dh-python, python3-all, python3-setuptools, debhelper (>= 9)
 Standards-Version: 3.9.5
-Homepage: https://github.com/smeso/saractl
+Homepage: https://smeso.it/sara
 
 Package: saractl
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}
-Recommends: python3-pyelftools, python3-prctl, python3-pyxattr, python3-setuptools
+Recommends: python3-pyelftools, python3-prctl, python3-pyxattr,
+ python3-setuptools
 Description: S.A.R.A.'s userspace utilities.
- S.A.R.A.'s userspace utilities.
- Work in Progress
-
+ saractl is the userspace utility that manages S.A.R.A. LSM's
+ configurations.
+ This package also ships sara-xattr that can be used to manage
+ S.A.R.A. LSM's extended attributes.
