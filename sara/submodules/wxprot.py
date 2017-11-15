@@ -282,7 +282,7 @@ class Config(BaseConfig):
                     for segment in elffile.iter_segments():
                         if describe_p_type(segment['p_type']) == 'GNU_STACK':
                             return describe_p_flags(segment['p_flags']) == 'RWE'
-            except IOError:
+            except (IOError, TypeError):
                 pass
         return False
 
@@ -294,7 +294,7 @@ class Config(BaseConfig):
                     for segment in elffile.iter_segments():
                         if describe_p_type(segment['p_type']) == 'GNU_RELRO':
                             return False
-            except IOError:
+            except (IOError, TypeError):
                 pass
             return True
         return False
