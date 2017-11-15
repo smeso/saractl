@@ -274,7 +274,8 @@ class Config(BaseConfig):
     def extra_dicts_stuff(self):
         pass
 
-    def execstack_check(self, path):
+    @staticmethod
+    def execstack_check(path):
         if ELFFile is not None:
             try:
                 with open(path, 'rb') as f:
@@ -286,7 +287,8 @@ class Config(BaseConfig):
                 pass
         return False
 
-    def relro_check(self, path):
+    @staticmethod
+    def relro_check(path):
         if ELFFile is not None:
             try:
                 with open(path, 'rb') as f:
