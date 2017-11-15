@@ -269,6 +269,9 @@ class Config(BaseConfig):
             if d['flags'] & SARA_WXP_MMAP and self.relro_check(d['path']):
                 raise WXPConfigException(location,
                             "MMAP restriction is incompaible with binaries missing a RELRO section.")
+            if d['flags'] & SARA_WXP_MMAP and self.dlopen_check(d['path']):
+                raise WXPConfigException(location,
+                            "MMAP restriction is incompaible with binaries using dlopen(3).")
         return d
 
     def extra_dicts_stuff(self):
@@ -299,6 +302,22 @@ class Config(BaseConfig):
             except (IOError, TypeError):
                 pass
             return True
+        return False
+
+    @staticmethod
+    def dlopen_check(path):
+        if ELFFile is not None:
+            try:
+                with open(path, 'rb') as f:
+                    elffile = ELFFile(f)
+                    for segment in elffile.iter_segments():
+                        if describe_p_type(segment['p_type']) == 'DYNAMIC':
+                            for tag in segment.iter_tags():
+                                if tag.entry.d_tag == 'DT_NEEDED' and \
+                                   tag.needed.startswith(b'libdl.so'):
+                                    return True
+            except (IOError, TypeError):
+                pass
         return False
 
     def build_binary(self):
