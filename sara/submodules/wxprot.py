@@ -24,6 +24,7 @@ from re import sub
 try:
     from elftools.elf.elffile import ELFFile
     from elftools.elf.descriptions import describe_p_type, describe_p_flags
+    from elftools.common.exceptions import ELFError
 except ImportError:
     ELFFile = None
 
@@ -286,7 +287,7 @@ class Config(BaseConfig):
                     for segment in elffile.iter_segments():
                         if describe_p_type(segment['p_type']) == 'GNU_STACK':
                             return describe_p_flags(segment['p_flags']) == 'RWE'
-            except (IOError, TypeError):
+            except (IOError, TypeError, ELFError):
                 pass
         return False
 
@@ -299,7 +300,7 @@ class Config(BaseConfig):
                     for segment in elffile.iter_segments():
                         if describe_p_type(segment['p_type']) == 'GNU_RELRO':
                             return False
-            except (IOError, TypeError):
+            except (IOError, TypeError, ELFError):
                 pass
             return True
         return False
@@ -316,7 +317,7 @@ class Config(BaseConfig):
                                 if tag.entry.d_tag == 'DT_NEEDED' and \
                                    tag.needed.startswith(b'libdl.so'):
                                     return True
-            except (IOError, TypeError):
+            except (IOError, TypeError, ELFError):
                 pass
         return False
 
