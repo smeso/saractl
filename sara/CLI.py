@@ -292,7 +292,7 @@ class CLI_xattr(CLI):
             xattr_name = self.xattr_prefix + sbm
             value = ' '.join(self.parsed_args.flags)
             value = self._safe_call(self.sara.xattr_encode, self.submodule, value, fname)
-            if value:
+            if value is not None:
                 if not self.parsed_args.user:
                     setxattr(fname, 'security.' + xattr_name, str(value))
                 if self.parsed_args.user or self.parsed_args.both:
