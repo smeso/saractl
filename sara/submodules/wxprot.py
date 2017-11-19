@@ -263,7 +263,7 @@ class Config(BaseConfig):
                 d['flags'] |= SARA_WXP_MMAP | SARA_WXP_OTHER | SARA_WXP_WXORX
         if not Config.are_flags_valid(d['flags']):
             raise WXPConfigException(location, 'invalid flags')
-        if d['exact'] and isfile(d['path']):
+        if d['exact'] and isfile(d['path']) and not d['flags'] & SARA_WXP_COMPLAIN:
             if d['flags'] & SARA_WXP_WXORX and self.execstack_check(d['path']):
                 raise WXPConfigException(location,
                             "WXORX protection is incompaible with GNU executable stack marking.")
