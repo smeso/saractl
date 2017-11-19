@@ -52,12 +52,6 @@ class Sara(object):
     def load(self, force=False):
         return self.__sml.load_config(force=force)
 
-    def screenlock(self):
-        return True
-
-    def screenunlock(self):
-        self.load()
-
     def test(self):
         if not self.__sml.test_config():
             logging.error('config test failed.')

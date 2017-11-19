@@ -112,10 +112,6 @@ class CLI(object):
                 self.__status_helper(ret, 'wxprot')
         elif self.cmd == 'lock':
             self._safe_call(self.sara.lock)
-        elif self.cmd == 'screenlock':
-            self._safe_call(self.sara.screenlock)
-        elif self.cmd == 'screenunlock':
-            self._safe_call(self.sara.screenunlock)
         elif self.cmd == 'config_to_file':
             dest = self.parsed_args.output
             if dest is not None:
@@ -222,10 +218,6 @@ class CLI(object):
         subparsers.add_parser('disable', help='Disable S.A.R.A.')
         subparsers.add_parser('status', help='Get S.A.R.A. status.')
         subparsers.add_parser('lock', help='Prevent changing the config until next reboot.')
-        subparsers.add_parser('screenlock',
-                              help='Enable extra protections to secure your computer while you are away form keyboard (-s is ignored).')
-        subparsers.add_parser('screenunlock',
-                              help='Disable extra protections (-s is ignored).')
         ctf = subparsers.add_parser('config_to_file',
                                     help='Generate various binary formats to import the configuration without {} (-s is ignored).'.format(prog))
         ctf.add_argument('-F',
