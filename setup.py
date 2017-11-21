@@ -29,8 +29,8 @@ setup(name='saractl',
       url='https://smeso.it/sara',
       license='GPLv3+',
       test_suite='tests',
-      entry_points={ 'console_scripts': ['saractl = sara.main:main',
-                                         'sara-xattr = sara.main:main [xattr]']},
+      entry_points={'console_scripts': ['saractl = sara.main:main',
+                                        'sara-xattr = sara.main:main [xattr]']},
       long_description=long_description,
       platforms='Linux',
       keywords='linux lsm linux-security-module sara security w^x',
@@ -57,6 +57,6 @@ setup(name='saractl',
                    'Programming Language :: Python :: 3 :: Only',
                    'Topic :: Security',
                    'Topic :: System :: Monitoring',
-                   'Topic :: System :: Operating System Kernels :: Linux'
+                   'Topic :: System :: Operating System Kernels :: Linux',
                    'Topic :: Utilities']
       )

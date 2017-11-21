@@ -431,7 +431,7 @@ class Config(BaseConfig):
             return False
         if flags & SARA_WXP_MMAP and \
            not (flags & SARA_WXP_OTHER):
-                return False
+            return False
         if flags & SARA_WXP_EMUTRAMP and \
            (flags & SARA_WXP_MPROTECT) != SARA_WXP_MPROTECT:
             return False
