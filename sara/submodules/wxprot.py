@@ -264,15 +264,17 @@ class Config(BaseConfig):
         if not Config.are_flags_valid(d['flags']):
             raise WXPConfigException(location, 'invalid flags')
         if d['exact'] and isfile(d['path']) and not d['flags'] & SARA_WXP_COMPLAIN:
-            if d['flags'] & SARA_WXP_WXORX and self.execstack_check(d['path']):
+            if d['flags'] & SARA_WXP_WXORX and \
+	       not (d['flags'] & SARA_WXP_EMUTRAMP) and \
+	       self.execstack_check(d['path']):
                 raise WXPConfigException(location,
-                            "WXORX protection is incompaible with GNU executable stack marking.")
+			"WXORX protection is incompaible with GNU executable stack marking. Did you forget EMUTRAMP?")
             if d['flags'] & SARA_WXP_MMAP and self.relro_check(d['path']):
                 raise WXPConfigException(location,
-                            "MMAP restriction is incompaible with binaries missing a RELRO section.")
+			"MMAP restriction is incompaible with binaries missing a RELRO section.")
             if d['flags'] & SARA_WXP_MMAP and self.dlopen_check(d['path']):
                 raise WXPConfigException(location,
-                            "MMAP restriction is incompaible with binaries using dlopen(3).")
+			"MMAP restriction is incompaible with binaries using dlopen(3).")
         return d
 
     def extra_dicts_stuff(self):
