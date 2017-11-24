@@ -12,4 +12,4 @@ case "$1" in
 esac
 
 /bin/mount -t securityfs none /sys/kernel/security
-/bin/sarainit
+/bin/sarainit || true
