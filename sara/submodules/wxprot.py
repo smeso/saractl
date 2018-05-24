@@ -17,7 +17,7 @@
 """
 
 from functools import total_ordering
-from os.path import isfile
+from os.path import isfile, realpath
 from struct import pack, unpack
 from re import sub
 
@@ -166,6 +166,8 @@ class Config(BaseConfig):
             raise WXPConfigException(location, 'invalid flags')
         if (len(path) - (1 if path[-1] == '*' else 0)) > SARA_PATH_MAX:
             raise WXPConfigException(location, 'path too long')
+        if path[0] != '/' and path != '*':
+            raise WXPConfigException(location, 'path is not absolute')
         ef = 0
         if 'EMUTRAMP' in flags:
             ef += 1
@@ -237,6 +239,11 @@ class Config(BaseConfig):
         else:
             d['path'] = path
             d['exact'] = True
+        if len(d['path']) > 0:
+            if d['path'][-1] == '/' and len(d['path']) > 1:
+                d['path'] = realpath(d['path']) + '/'
+            else:
+                d['path'] = realpath(d['path'])
         d['flags'] = 0
         for f in flags:
             if f == 'FULL':

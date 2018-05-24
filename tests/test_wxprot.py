@@ -210,9 +210,9 @@ class TestWXProt(TestCase):
         for k, v in OK_FLAGS.items():
             for vv in permutations(v, len(v)):
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_with_emutramp_big(self):
         c = wxprot.Config(xattr=True,
@@ -222,9 +222,9 @@ class TestWXProt(TestCase):
             for vv in v:
                 vv = list(vv)
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_mprotect(self):
         c = wxprot.Config(xattr=True,
@@ -236,9 +236,9 @@ class TestWXProt(TestCase):
             k &= 0xfeff
             for vv in permutations(v, len(v)):
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_mprotect_big(self):
         c = wxprot.Config(xattr=True,
@@ -251,9 +251,9 @@ class TestWXProt(TestCase):
                 k &= 0xfeff
                 vv = list(v)
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_none(self):
         c = wxprot.Config(xattr=True,
@@ -265,9 +265,9 @@ class TestWXProt(TestCase):
             k &= 0x200
             for vv in permutations(v, len(v)):
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_none_big(self):
         c = wxprot.Config(xattr=True,
@@ -280,9 +280,9 @@ class TestWXProt(TestCase):
                 k &= 0x200
                 vv = list(v)
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_mprotect_none(self):
         c = wxprot.Config(xattr=True,
@@ -297,9 +297,9 @@ class TestWXProt(TestCase):
             k &= 0xfeff
             for vv in permutations(v, len(v)):
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_mprotect_none_big(self):
         c = wxprot.Config(xattr=True,
@@ -315,9 +315,9 @@ class TestWXProt(TestCase):
                 k &= 0xfeff
                 vv = list(v)
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_none_mprotect(self):
         c = wxprot.Config(xattr=True,
@@ -332,9 +332,9 @@ class TestWXProt(TestCase):
             k &= 0x200
             for vv in permutations(v, len(v)):
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_no_emutramp_none_mprotect_big(self):
         c = wxprot.Config(xattr=True,
@@ -350,9 +350,9 @@ class TestWXProt(TestCase):
                 k &= 0x200
                 vv = list(v)
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv)]))
                 self.assertEqual(k,
-                    c.build_xattr_from_single_line(['filename', ','.join(vv+vv)]))
+                    c.build_xattr_from_single_line(['/filename', ','.join(vv+vv)]))
 
     def test_build_xattr_from_single_line_multi_emutramp(self):
         c = wxprot.Config(xattr=True,
@@ -377,16 +377,29 @@ class TestWXProt(TestCase):
                 f = set(f)
                 if f not in self.ok_groups:
                     with self.assertRaises(wxprot.WXPConfigException):
-                        c.build_xattr_from_single_line(['filename', ','.join(f)])
+                        c.build_xattr_from_single_line(['/filename', ','.join(f)])
+
+    def test_non_absolute_path(self):
+        config_lines = [('location', ['file', 'mprotect'])]
+        with self.assertRaises(wxprot.WXPConfigException):
+            c = wxprot.Config(config_lines=config_lines,
+                              main_options={'wxprot_emutramp_missing_default': 'MPROTECT'},
+                              extra_files={'emutramp_available': '1'})
+
+    def test_star_only_path(self):
+        config_lines = [('location', ['*', 'mprotect'])]
+        c = wxprot.Config(config_lines=config_lines,
+                          main_options={'wxprot_emutramp_missing_default': 'MPROTECT'},
+                          extra_files={'emutramp_available': '1'})
 
     def test_build_dicts_from_config_lines(self):
-        config_lines = [('location', ['file', 'mprotect']),
-                        ('location', ['file2/*', 'mprotect']),
-                        ('location', ['file2/', 'wxorx']),
-                        ('location', ['file', 'full'])]
-        expected_res = [{'exact': True, 'path': b'file2/', 'flags': 8},
-                        {'exact': False, 'path': b'file2/', 'flags': 15},
-                        {'exact': True, 'path': b'file', 'flags': 15}]
+        config_lines = [('location', ['/file', 'mprotect']),
+                        ('location', ['/file2/*', 'mprotect']),
+                        ('location', ['/file2/', 'wxorx']),
+                        ('location', ['/file', 'full'])]
+        expected_res = [{'exact': True, 'path': b'/file2/', 'flags': 8},
+                        {'exact': False, 'path': b'/file2/', 'flags': 15},
+                        {'exact': True, 'path': b'/file', 'flags': 15}]
         c = wxprot.Config(config_lines=config_lines,
                           main_options={'wxprot_emutramp_missing_default': 'MPROTECT'},
                           extra_files={'emutramp_available': '1'})
@@ -395,16 +408,16 @@ class TestWXProt(TestCase):
             self.assertTrue(e['exact'] == c.dicts[i]['exact'])
             self.assertTrue(e['path'] == c.dicts[i]['path'])
             self.assertTrue(e['flags'] == c.dicts[i]['flags'])
-        self.assertTrue(sha1(c.binary).hexdigest() == 'f059b6788d5e5be7cd2446ea41da08170152f961')
+        self.assertTrue(sha1(c.binary).hexdigest() == 'ccddb46fbe8b6ff7bdb9e1c56d22d35f1af4d76b')
 
     def test_build_dicts_from_binary(self):
         binary = (b'SARAWXPR\x00\x00\x00\x00\x03\x00\x00\x00\x12\x99'
                   b'#\xeeP\xaa\xe5Lqo\xd5\x86\xd6\xe4\xc5\x16\xd3'
-                  b'\xf8!\x01\x06\x00\x08\x00\x01file2/\x06\x00\x0f'
-                  b'\x00\x00file2/\x04\x00\x0f\x00\x01file')
-        config_lines = [('', ['file2/', 'WXORX']),
-                        ('', ['file2/*', 'MPROTECT, WXORX']),
-                        ('', ['file', 'MPROTECT, WXORX'])]
+                  b'\xf8!\x01\x07\x00\x08\x00\x01/file2/\x07\x00\x0f'
+                  b'\x00\x00/file2/\x05\x00\x0f\x00\x01/file')
+        config_lines = [('', ['/file2/', 'WXORX']),
+                        ('', ['/file2/*', 'MPROTECT, WXORX']),
+                        ('', ['/file', 'MPROTECT, WXORX'])]
         c = wxprot.Config(binary=binary,
                           main_options={'wxprot_emutramp_missing_default': 'MPROTECT'},
                           extra_files={'emutramp_available': '1'})

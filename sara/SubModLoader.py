@@ -19,7 +19,7 @@
 import logging
 from glob import iglob
 from hashlib import sha1
-from os.path import join, isdir
+from os.path import join, isdir, realpath
 from re import sub
 from shlex import quote, split
 
@@ -141,9 +141,9 @@ class SubModLoader(object):
                     logging.warning(e)
                 if obj:
                     if filename is None:
-                        filename = 'xattr '
+                        filename = '/xattr '
                     else:
-                        filename = quote(filename) + ' '
+                        filename = quote(realpath(filename)) + ' '
                     value = split(filename + value)
                     return obj.build_xattr_from_single_line(value)
                 break
