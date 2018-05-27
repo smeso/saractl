@@ -3,6 +3,8 @@
 
 . /usr/share/initramfs-tools/hook-functions
 
-copy_exec /usr/bin/base64 /bin
-/usr/bin/saractl config_to_file -F sh -o "${DESTDIR}/bin/sarainit" || true
-chmod +x "${DESTDIR}/bin/sarainit" || true
+if [ -d /sys/kernel/security/sara/ ]; then
+	copy_exec /usr/bin/base64 /bin
+	/usr/bin/saractl config_to_file -F sh -o "${DESTDIR}/bin/sarainit" || true
+	chmod +x "${DESTDIR}/bin/sarainit" || true
+fi
