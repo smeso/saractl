@@ -22,7 +22,7 @@ with open('README.rst') as f:
     long_description = f.read()
 
 setup(name='saractl',
-      version='0.1',
+      version='0.2',
       description='S.A.R.A.\'s userspace utilities.',
       author='Salvatore Mesoraca',
       author_email='s.mesoraca16@gmail.com',
