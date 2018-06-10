@@ -1,6 +1,6 @@
 # Maintainer: Salvatore Mesoraca <s.mesoraca16@gmail.com>
 pkgname=saractl
-pkgver=r50.19575b0
+pkgver=0.2
 pkgrel=1
 pkgdesc="Userspace counterpart of the S.A.R.A. LSM"
 arch=('any')
@@ -10,13 +10,10 @@ depends=('python-setuptools' 'python-pyelftools' 'python-prctl' 'python-pyxattr'
 makedepends=('git')
 backup=('etc/sara/main.conf'
         'etc/sara/wxprot.conf.d/99_wxprot.conf')
-source=('git+https://github.com/smeso/saractl.git')
+source=("git+https://github.com/smeso/saractl.git#tag=v${pkgver}?signed")
+validpgpkeys=('D7286260BBF31719A2759FA485F0580B9DACBE6E' # Salvatore Mesoraca
+             )
 sha256sums=('SKIP')
-
-pkgver() {
-  cd "${srcdir}/${pkgname}"
-  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-}
 
 package() {
   cd "${srcdir}/${pkgname}"
