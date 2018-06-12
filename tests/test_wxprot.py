@@ -2,6 +2,8 @@ from hashlib import sha1
 from itertools import combinations, permutations
 from unittest import TestCase
 
+import logging
+
 from sara.submodules import wxprot
 
 
@@ -400,9 +402,11 @@ class TestWXProt(TestCase):
         expected_res = [{'exact': True, 'path': b'/file2/', 'flags': 8},
                         {'exact': False, 'path': b'/file2/', 'flags': 15},
                         {'exact': True, 'path': b'/file', 'flags': 15}]
+        logging.basicConfig(level=logging.ERROR)
         c = wxprot.Config(config_lines=config_lines,
                           main_options={'wxprot_emutramp_missing_default': 'MPROTECT'},
                           extra_files={'emutramp_available': '1'})
+        logging.basicConfig(level=logging.INFO)
         self.assertTrue(len(expected_res) == len(c.dicts))
         for i, e in enumerate(expected_res):
             self.assertTrue(e['exact'] == c.dicts[i]['exact'])

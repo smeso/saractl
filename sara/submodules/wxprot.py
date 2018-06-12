@@ -17,9 +17,11 @@
 """
 
 from functools import total_ordering
-from os.path import isfile, realpath
+from os.path import isfile, islink, realpath
 from struct import pack, unpack
 from re import sub
+
+import logging
 
 try:
     from elftools.elf.elffile import ELFFile
@@ -114,10 +116,13 @@ class Config(BaseConfig):
         self.load_emudef()
         seen = set()
         for location, line in self.config_lines:
-            if line[0] in seen:
+            d = self.parse_line(location, line)
+            s = (d['path'], d['exact'])
+            if s in seen:
+                logging.warning("'{}' will be skipped because already present (is it a symlink?).".format(line[0]))
                 continue
-            seen.add(line[0])
-            self.dicts.append(self.parse_line(location, line))
+            seen.add(s)
+            self.dicts.append(d)
         self.dicts.sort(key=self.DictKey)
 
     def load_emudef(self):
@@ -240,6 +245,8 @@ class Config(BaseConfig):
             d['path'] = path
             d['exact'] = True
         if len(d['path']) > 0:
+            if islink(d['path']):
+                logging.warning("'{}' is a symlink, its target will be used.".format(d['path']))
             if d['path'][-1] == '/' and len(d['path']) > 1:
                 d['path'] = realpath(d['path']) + '/'
             else:
