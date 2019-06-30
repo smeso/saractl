@@ -35,7 +35,7 @@ try:
 except ImportError:
     XATTR_AVAILABLE = False
 
-VERSION = '0.2'
+VERSION = '0.3'
 
 
 class CLI(object):

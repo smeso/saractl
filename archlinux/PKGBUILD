@@ -1,6 +1,6 @@
 # Maintainer: Salvatore Mesoraca <s.mesoraca16@gmail.com>
 pkgname=saractl
-pkgver=0.2
+pkgver=0.3
 pkgrel=1
 pkgdesc="Userspace counterpart of the S.A.R.A. LSM"
 arch=('any')
