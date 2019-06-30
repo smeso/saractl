@@ -200,17 +200,13 @@ class SubModLoader(object):
         oldv = {}
         for k, v in self.__config_objects.items():
             oldv[k] = (extras[k]['hash'], sha1(v.binary).digest())
-            if oldv[k][0] == '0'*40 and len(v.binary) != 0:
-                return False
-            if oldv[k][0] != '0'*40 and len(v.binary) == 0:
-                return False
         for k, v in self.__config_objects.items():
             lf = join(self.sysfs_path, k, '.load')
             try:
                 with open(lf, 'wb') as fd:
                     fd.write(v.binary)
             except IOError:
-                pass
+                return False
         self.__load_config_objects_binary()
         extras = self.get_extras()
         cfs = {}

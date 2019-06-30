@@ -30,6 +30,7 @@ try:
 except ImportError:
     ELFFile = None
 
+from sara.DFA import DFA
 from sara.submodules.BaseConfig import BaseConfig, ConfigException, BinaryException
 
 
@@ -76,28 +77,6 @@ SARA_WXP_ALL = SARA_WXP_FULL | \
 class Config(BaseConfig):
     WARN = "WX protection config has been simplified"
 
-    @total_ordering
-    class DictKey(object):
-        def __init__(self, obj, *args):
-            self.obj = obj
-
-        def __lt__(self, other):
-            if len(self.obj['path']) < len(other.obj['path']):
-                return False
-            elif len(self.obj['path']) > len(other.obj['path']):
-                return True
-            else:
-                if self.obj['exact'] == other.obj['exact']:
-                    return self.obj['path'] < other.obj['path']
-                elif self.obj['exact']:
-                    return True
-                else:
-                    return False
-
-        def __eq__(self, other):
-            return self.obj['path'] == other.obj['path'] and \
-                   self.obj['exact'] == other.obj['exact']
-
     def __init__(self,
                  config_lines=None,
                  binary=None,
@@ -123,7 +102,6 @@ class Config(BaseConfig):
                 continue
             seen.add(s)
             self.dicts.append(d)
-        self.dicts.sort(key=self.DictKey)
 
     def load_emudef(self):
         emudef = self.main_options['wxprot_emutramp_missing_default']
@@ -338,44 +316,45 @@ class Config(BaseConfig):
         return False
 
     def build_binary(self):
-        self._binary = b'SARAWXPR'
-        self._binary += pack("<I", 0)
-        self._binary += pack("<I", len(self.dicts))
-        self._binary += self.bhash
+        t = []
         for rule in self.dicts:
-            rule['path'] = rule['path'].encode('utf8')
-            self._binary += pack("<H", len(rule['path']))
-            self._binary += pack("<H", rule['flags'])
-            self._binary += pack("B", rule['exact'])
-            self._binary += rule['path']
+            t.append((rule['path'].encode('utf8'),
+                      rule['flags'],
+                      not rule['exact']))
+        d = DFA()
+        d.build(t)
+        self._binary = d.serialize(self.bhash)
 
     def build_dicts_from_binary(self):
-        p = 0
-        if self._binary[:8] != b'SARAWXPR':
-            raise WXPBinaryException('wrong magic number')
-        p += 8
-        version, rnum = unpack("<II", self._binary[p:p+8])
-        p += 8
-        #bhash = self._binary[p:p+20]
-        p += 20
-        if version != 0:
-            raise WXPBinaryException('wrong version')
-        for _ in range(rnum):
-            d = {}
-            chunk = self._binary[p:p+5]
-            p += 5
-            if len(chunk) != 5:
-                raise WXPBinaryException('wrong size')
-            tmp = unpack("<HHB", chunk)
-            path_len = tmp[0]
-            d['flags'] = tmp[1]
-            d['exact'] = tmp[2]
-            chunk = self._binary[p:p+path_len].decode('utf8')
-            p += path_len
-            if len(chunk) != path_len:
-                raise WXPBinaryException('wrong size')
-            d['path'] = chunk
-            self.dicts.append(d)
+        pass
+
+    #def build_dicts_from_binary(self):
+        #p = 0
+        #if self._binary[:8] != b'SARAWXPR':
+            #raise WXPBinaryException('wrong magic number')
+        #p += 8
+        #version, rnum = unpack("<II", self._binary[p:p+8])
+        #p += 8
+        ##bhash = self._binary[p:p+20]
+        #p += 20
+        #if version != 0:
+            #raise WXPBinaryException('wrong version')
+        #for _ in range(rnum):
+            #d = {}
+            #chunk = self._binary[p:p+5]
+            #p += 5
+            #if len(chunk) != 5:
+                #raise WXPBinaryException('wrong size')
+            #tmp = unpack("<HHB", chunk)
+            #path_len = tmp[0]
+            #d['flags'] = tmp[1]
+            #d['exact'] = tmp[2]
+            #chunk = self._binary[p:p+path_len].decode('utf8')
+            #p += path_len
+            #if len(chunk) != path_len:
+                #raise WXPBinaryException('wrong size')
+            #d['path'] = chunk
+            #self.dicts.append(d)
 
     def build_config_lines(self):
         for d in self.dicts:

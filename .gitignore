@@ -4,3 +4,4 @@ a.out
 *.pyc
 dist
 MANIFEST
+*.egg-info

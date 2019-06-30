@@ -20,6 +20,7 @@ import logging
 from base64 import encodebytes
 from os import makedirs
 from os.path import join
+from sara.DFA import dfa_kernel_test
 from sara.SubModLoader import SubModLoader
 from sara.templates import SH_TEMPLATE, C_TEMPLATE, c_array
 
@@ -53,6 +54,9 @@ class Sara(object):
         return self.__sml.load_config(force=force)
 
     def test(self):
+        if not dfa_kernel_test():
+            logging.error('DFA test failed.')
+            return False
         if not self.__sml.test_config():
             logging.error('config test failed.')
             return False
