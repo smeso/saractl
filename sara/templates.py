@@ -36,9 +36,9 @@ WXPROTN="{wxprot_noemutramp}"
 
 if [ -f "${{SECFS}}/sara/wxprot/emutramp_available" ] && \\
    [ "`cat "${{SECFS}}/sara/wxprot/emutramp_available"`" -eq 1 ]; then
-    echo "${{WXPROT}}" | base64 -d > "${{SECFS}}/sara/wxprot/.load"
+    echo "${{WXPROT}}" | base64 -d | dd of="${{SECFS}}/sara/wxprot/.load" iflag=fullblock bs="$(echo "${{WXPROT}}" | base64 -d|wc -c |cut -d' ' -f1)" 2>/dev/null
 else
-    echo "${{WXPROTN}}" | base64 -d > "${{SECFS}}/sara/wxprot/.load"
+    echo "${{WXPROTN}}" | base64 -d | dd of="${{SECFS}}/sara/wxprot/.load" iflag=fullblock bs="$(echo "${{WXPROTN}}" | base64 -d|wc -c |cut -d' ' -f1)" 2>/dev/null
 fi
 
 echo "{wxprot_xattr_enabled}" > "${{SECFS}}/sara/wxprot/xattr_enabled"
